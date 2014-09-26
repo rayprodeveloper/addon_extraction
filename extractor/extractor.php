@@ -18,8 +18,8 @@ define ("ADDON_COMMENT_BEGIN", "/* ADDON  %%file%% %%line%% BEGIN */");
 define ("ADDON_COMMENT_END", "/* ADDON  %%file%% %%line%% END */");
 require_once (dirname(__FILE__) . '/language/language.php');
 
-class Addons_NOM extends Interspire_Addons {
-    public $addon_name="NOM";
+class Addons_extractor extends Interspire_Addons {
+    public $addon_name="extractor";
     public $install_ = array();
     
     
@@ -31,9 +31,20 @@ class Addons_NOM extends Interspire_Addons {
         
         
         // Permet une requete
-        // $quer =  $this -> Db -> Query ('');
+        // $quer =  $this -> Db -> Query ("");
         // $this -> Db -> Fetch ($quer);
         
+         $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_settings (hours int(11), path varchar(255))");
+         if ($quer == false){
+         	throw new Exception("impossible de creer la table email_addons_extraction_settings");
+         }
+         $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_historique (id int(11) NOT NULL AUTO_INCREMENT, timeStarted int(18), ,workStatus varchar(255),campagneName varchar(255), PRIMARY KEY (id))");
+         if ($quer == false){
+         	throw new Exception("impossible de creer la table email_addons_extraction_historique");
+         }
+         
+         
+        // echo "This is some text" > randomtext.txt
         
         
         // Modification des fichier
