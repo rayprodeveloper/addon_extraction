@@ -50,7 +50,7 @@ class Addons_extractor extends Interspire_Addons {
          
          $hours = 3600*72;
          $this -> Db -> Query ("INSERT INTO ". $tableSettings." VALUES (".$hours.",'/home/admin/extractor',25)" );
-         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."jobs ADD check int(1) SET DEFAULT 0");
+         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."stats_newsletters ADD check int(1) SET DEFAULT 0");
          
          
 		$this -> installFile();

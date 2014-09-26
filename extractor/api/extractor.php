@@ -58,6 +58,8 @@ class extractor_Api {
     function cron() {
     	
     	$this -> db -> Connect();
+    	
+    	// recupere les process qui sont en attente et en cours depuis plus d'une heure
     	$jobs = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX .   'addons_extractor_historique WHERE workStatus = "w" OR (workStatus = "i" AND lastTimeUpdate <  ' . time() - 3600 . ')');
     	
     	if (!$jobs) {
@@ -67,30 +69,33 @@ class extractor_Api {
     	
     	$jobs = $this -> db -> Fetch ($jobs);
     	
-    	
+    
     	if ($jobs) {
-    		// On reprend le job
+    		// On reprend le job arreter
 				$this -> Process ($jobs);
     		exit;
     	}
     	
-    	
+    	// récupere le nombre de process en cours 
     	$jobs = $this -> db -> Query ('SELECT COUNT(*) FROM ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique WHERE workStatus = "i" OR workStatus = "w"  ');
     	
     	$jobs = $this -> db -> Fetch ($jobs);
     	
+    	// recupere les settings de l'addon
     	$settings = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_settings ');
     	
     	$settings = $this -> db -> Fetch ($settings);
     	
-    	
+    	// si le nombre de process en cours est superieur au nombre max de process quitter le script
     	if ($jobs)
     		if ($jobs ['COUNT(*)'] > $settings ['maxProcess']) {
     			echo 'Trop de job en cour';
     			exit;
     		} 
     	
-    	$campaign = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'stats_newsletters WHERE  finishtime < ' . time() - (3600 * 72) . ' AND check != "check" ');
+    	
+    	// recupere toutes les campagne fini depuis plus de 72h et non check 
+    	$campaign = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'stats_newsletters WHERE  finishtime < ' . time() - $settings["hours"]*3600 . ' AND check != "check" ');
     	
     	if (!$campaign) {
     		echo 'Erreur récupération';
@@ -131,7 +136,7 @@ class extractor_Api {
 			echo 'Erreur lors de la mise à jour de la table de job ';
 			exit;
 		}
-		
+		// recupere les campagnes
 		$campaigndetail = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'newsletters WHERE newsletterid = ' . $campaign ['newsletterid'] . ' ');
 		if (!$campaigndetail) {
 			$this -> db -> RollBackTransaction ();
