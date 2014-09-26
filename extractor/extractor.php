@@ -72,7 +72,7 @@ class Addons_extractor extends Interspire_Addons {
          $this -> Db -> Query ("INSERT INTO ". $tableSettings." VALUES (".$hours.",'/home/admin/extractor',25)" );
 
          // Ajout de l'entrée check pour savoir si une campagne à été traité
-         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."stats_newsletters ADD check int(1) SET DEFAULT 0");
+         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."stats_newsletters ADD check varchar(15)");
          
          
 		$this -> installFile();
