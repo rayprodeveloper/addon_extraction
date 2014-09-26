@@ -34,15 +34,17 @@ class Addons_extractor extends Interspire_Addons {
         // $quer =  $this -> Db -> Query ("");
         // $this -> Db -> Fetch ($quer);
         
-         $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_settings (hours int(11), path varchar(255))");
+         $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_settings (hours int(11), path varchar(255), maxProcess int(8))");
          if ($quer == false){
          	throw new Exception("impossible de creer la table email_addons_extraction_settings");
          }
          $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_historique (id int(11) NOT NULL AUTO_INCREMENT, timeStarted int(18), ,workStatus varchar(255),campagneName varchar(255), lastTimeUpdate int (11), type varchar (255), campaignId int (11), PRIMARY KEY (id))");
          if ($quer == false){
          	throw new Exception("impossible de creer la table email_addons_extraction_historique");
-         }
+         }	
          
+         $quer = $this -> Db ->  Query ("SELECT * from ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_settings");
+         $this -> Db -> Fetch ($quer);
          
         // echo "This is some text" > randomtext.txt
         
