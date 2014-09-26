@@ -89,6 +89,8 @@ class Addons_extractor extends Interspire_Addons {
      */
     function Uninstall() {
         
+    	// vider la table des settings de l'addon
+        $this -> Db -> Query ("DELETE FROM ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_settings");
         
         // On récupère les anciens fichiers
         $old = scandir (IEM_ADDONS_PATH . '/' . $this -> addon_name . '/backup');
