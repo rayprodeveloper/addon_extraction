@@ -3,7 +3,7 @@
 
 
 
-class nom_Api {
+class extractor_Api {
 
     
     
@@ -11,6 +11,7 @@ class nom_Api {
     public $template_system;
     public $addon_name;
     function __construct() {
+    	$this -> addon_name = "extractor";
         $this -> template_system =  GetTemplateSystem(IEM_ADDONS_PATH . '/' . $this -> addon_name . '/templates/');
         $this -> db = IEM::getDatabase();
     }
