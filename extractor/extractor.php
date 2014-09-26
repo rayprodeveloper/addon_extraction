@@ -34,23 +34,48 @@ class Addons_extractor extends Interspire_Addons {
         // $quer =  $this -> Db -> Query ("");
         // $this -> Db -> Fetch ($quer);
         
+        
+        
         $tableSettings = SENDSTUDIO_TABLEPREFIX ."addons_extractor_settings";
         
+        
+        
+        
+        
+        
          $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_settings (hours int(11), path varchar(255), maxProcess int(8))");
+			// Création de la table settings
+			
+         // Si la création fail
          if ($quer == false){
          	throw new Exception("impossible de creer la table email_addons_extraction_settings");
          }
+         
          $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_historique (id int(11) NOT NULL AUTO_INCREMENT, timeStarted int(18), ,workStatus varchar(255),campagneName varchar(255), lastTimeUpdate int (11), type varchar (255), campaignId int (11), PRIMARY KEY (id))");
+         	// Création de la table historique
+         
          if ($quer == false){
          	throw new Exception("impossible de creer la table email_addons_extraction_historique");
          }
           
+         
+         // Répertoire contenant les fichiers
          exec ('mkdir /home/admin/extractor');
+         
+         
+         // On donne les droits d'accès
          exec ('chmod 777 /home/admin/extractor');
          
+         
+         // Définition des settings
          $hours = 3600*72;
          $this -> Db -> Query ("INSERT INTO ". $tableSettings." VALUES (".$hours.",'/home/admin/extractor',25)" );
-         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."jobs ADD check int(1) SET DEFAULT 0");
+         
+         
+         // Ajout de l'entrée check pour savoir si une campagne à été traité
+         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."stats_newsletters ADD check int(1) SET DEFAULT 0");
+         
+         
          
          
 		$this -> installFile();
@@ -141,41 +166,13 @@ class Addons_extractor extends Interspire_Addons {
      * @return boolean
      */
     function installFile () {
-            // Ici on modifie les fichier   
-            // Exemple
-            // On modifie le fichier X.php contenue dans le dossier INTERSPIRE/admin/Y/
-            //
-            // $opt = array (LIGNE DU FICHIER => ' CONTENUE ',
-            //              "" ""             => "" "");
-            //
-            // Le tableau permet de donner les lignes que l'on souhaite modifier, ou où l'on souhaite ajouter
-            //
-            // $install = $this -> add ($opt, 'X.php', 'Y/', true);
-            // 
-            // On modifie les lignes du fichier X.php, en remplacant ces lignes la car on a mis à true sinon on met à false et on ajoute une ligne au fichier
-            // Si on ajoute une ligne au fichier il faut bien calculer les lignes pour les suivant
-            //
-            //
-            // Si on veux supprimer des lignes
-            // 
-            // Exemple
-            //
-            //
-            // $opt = array (LIGNE DEBUT, LIGNE FIN);
-            //
-            //
-            // Le tableau détermine les ligne à supprimer
-            // $install = $this -> del ($opt, 'X.php', 'Y/');
-            //
-            // On a supprimé les lignes [LDEBUT,LFIN] de INTERSPIRE / admin / Y / X.php, la suppression ne fait que commenter ces lignes, ainsi pas besoin de calculer si on veux ajouter du contenue
-            //
-            //
-            //
             
-        
+    	
+    	 
     	$opt = array (949 => ' array ( \'text\' => \'Module d\'extraction\',  \'link\' => \'index.php?Page=Addons&amp;Addon=extractor&amp;Action=Manage\',  \'show\' => true, \'description\' => \'Outils permettant d\'exporter les ouvreurs\'), array (  ');
     	$this -> add ($opt, 'sendstudio_functions.php', 'functions/', true);
     	 
+    	
     	$opt = array (38 => '$addon_system = new Interspire_Addons();$installer_enabled = $addon_system->isEnabled("extractor");if ($installer_enabled){    $installer_enabled = $addon_system->Process("extractor", "GetApi", "extractor");    $installer_enabled->cron();} ');
     	$this -> add ($opt, 'cron.php', 'cron/');
     	 
