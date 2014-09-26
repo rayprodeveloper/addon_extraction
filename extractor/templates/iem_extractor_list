@@ -1,0 +1,24 @@
+<script>
+function showHint(str) {
+  if (str.length==0) { 
+    document.getElementById("txtHint").innerHTML="";
+    return;
+  }
+  var xmlhttp=new XMLHttpRequest();
+  xmlhttp.onreadystatechange=function() {
+    if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+      document.getElementById("txtHint").innerHTML=xmlhttp.responseText;
+    }
+  }
+  xmlhttp.open("GET","gethint.php?q="+str,true);
+  xmlhttp.send();
+}
+
+</script>
+
+<div>
+	<h2>Liste des fichiers d'extraction</h2>
+	<p>Choix campagne :</p><select o>{listCampagne}</select></br>
+	<p>Choix shoot :</p><select>{listShoot}</select></br>
+	<p>Choix type :</p><input type="checkbox" value="open">open<input type="checkbox" value="click">click<input type="checkbox" value="bounce">bounce<input type="checkbox" value="desincrit">desinscrit
+<div>

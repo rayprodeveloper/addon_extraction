@@ -51,7 +51,7 @@ class Addons_extractor extends Interspire_Addons {
          	throw new Exception("impossible de creer la table email_addons_extraction_settings");
          }
          
-         $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_historique (id int(11) NOT NULL AUTO_INCREMENT, timeStarted int(18), ,workStatus varchar(255),campagneName varchar(255), lastTimeUpdate int (11), type varchar (255), campaignId int (11), PRIMARY KEY (id))");
+         $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_historique (id int(11) NOT NULL AUTO_INCREMENT, timeStarted int(18), ,workStatus varchar(255),campagneName varchar(255), lastTimeUpdate int (11), type varchar (255), campaignid int(11), jobid int(11) PRIMARY KEY (id))");
          	// Création de la table historique
          
          if ($quer == false){
@@ -179,7 +179,21 @@ class Addons_extractor extends Interspire_Addons {
            return true;
     }
     
+    function Admin_Action_Manage(){
+    	$option = "";
+    	$this -> Db = IEM::getDatabase();
+    	$this -> Db -> Connect();
+    	$list = $this -> Db -> Query ('SELECT newsletterid, name FROM ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique,' . SENDSTUDIO_TABLEPREFIX . 'newsletters where ' . SENDSTUDIO_TABLEPREFIX . 'newsletters.newsletterid = ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique order by name asc');
+    	
+    	$SelectCamp ="";
+    	while($unlist = $this -> db -> Fetch ($list)){
+    		$SelectCamp .= "<option id=".$unlist["newsletterid"].">".$unlist["name"]."</option>";
+    	}
+    	
+    	$this -> template_system -> Assign ('listCampagne', $SelectCamp);
+    }
     
+    //exemple
     function Action_ () {
         $option = "";
         $this -> Db = IEM::getDatabase();
