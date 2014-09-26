@@ -48,9 +48,67 @@ class nom_Api {
           
           
     }
+   
+   
     
-   
-   
+    
+    
+    
+    function cron() {
+    	
+    	
+    	$jobs = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX .   'addons_extractor_historique WHERE workStatus = "w" OR (workStatus = "i" AND lastTimeUpdate <  ' . time() - 3600 . ')');
+    	
+    	if (!$jobs) {
+    		echo 'Erreur lors de la récupération du jobs';
+    		exit;
+    	}
+    	
+    	$jobs = $this -> db -> Fetch ($jobs);
+    	
+    	
+    	if ($jobs) {
+    		// On reprend le job
+
+    		exit;
+    	}
+    	
+    	
+    	$jobs = $this -> db -> Query ('SELECT COUNT(*) FROM ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique WHERE workStatus = "i" OR workStatus = "w"  ');
+    	
+    	$jobs = $this -> db -> Fetch ($jobs);
+    	
+    	$settings = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_settings ');
+    	
+    	$settings = $this -> db -> Fetch ($settings);
+    	
+    	
+    	if ($jobs)
+    		if ($jobs ['COUNT(*)'] > $settings ['maxProcess']) {
+    			echo 'Trop de job en cour';
+    			exit;
+    		} 
+    	
+    	$campaign = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'newsletters WHERE jobtype = "send" AND jobstatus = "c" AND lastupdatetime < ' . time() - (3600 * 72) . ' ');
+    	
+    	if (!$campaign) {
+    		echo 'Erreur récupération';
+    		exit;
+    	}
+    	
+    	$campaign = $this -> db -> Fetch ($campaign);
+    	
+    	
+    	$this -> Process ($campaign);
+    	
+    	
+    }
+    
+    
+    
+    private function Process ($campaign) {
+    	
+    }
 }
 
 ?>
