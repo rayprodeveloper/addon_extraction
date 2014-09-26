@@ -10,10 +10,13 @@ class extractor_Api {
     public $db;
     public $template_system;
     public $addon_name;
+    
+   	public $job;
     function __construct() {
     	$this -> addon_name = "extractor";
         $this -> template_system =  GetTemplateSystem(IEM_ADDONS_PATH . '/' . $this -> addon_name . '/templates/');
         $this -> db = IEM::getDatabase();
+        $this -> job = array ('open', 'bounce', 'unsub');
     }
     
     
@@ -116,13 +119,71 @@ class extractor_Api {
     
     private function Process ($campaign) {
     	
+    	echo 'Debut du job : ' . $campaign ['id'];
+    	$res = $this -> db -> Query ('UPDATE ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique SET workStatus = "i" AND lastTimeUpdate = ' . time() . ' WHERE id = ' . $campaign ['id'] . ' ');
+    	if (!$res) {
+    		echo 'Erreur lors de la mise à jour du status';
+    		exit;
+    	}
+    	echo PHP_EOL;
+    	echo "Création du fichier";
+    	
+    	$settings = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_settings ');
+    	$settings = $this -> db -> Fetch ($settings);
+    	
+    	if (!$settings) {
+    		echo ' Problème base ';
+    		exit;
+    	}
+   
+    	
+    	if ($campaign ['type'] == 'open')
+    		$this -> ProcessOpen ($campaign, $settings);
+    	else
+    		exit;
+    	
+    	
+		
+    	
+    	
+    	$this -> db -> Query ('UPDATE ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique SET workStatus = "t" WHERE id = ' . $campaign ['id'] . ' ');
+    	
+    	
+    	
+    	
     }
     
     
+    private function ProcessOpen ($campaign, $settings) {
+    	$fp = fopen ($settings ['path'] . '/' . $campaign ['type'] . '_' . $campaign ['jobid'] . '_' . $campaign ['campaignid'], 'a');
+    	
+    	$open = $this -> db -> Query ('SELECT * FROM   ' . SENDSTUDIO_TABLEPREFIX . 'stats_emailopens WHERE opentime > ' . $campaign ['lastTimeUpdate'] . '	');
+    	if (!$open) {
+    		echo 'Erreur base';
+    		exit;
+    	}
+    	
+    	while ($write = $this -> db -> Fetch ($open))   {
+    		$write = $this -> db -> Query ('SELECT emailaddress FROM ' . SENDSTUDIO_TABLEPREFIX . 'list_subscribers WHERE subscriberid = ' . $write ['subscriberid'] . ' ');
+    		$write = $this -> db -> Fetch ($write);
+    		echo 'ecriture ' . $write ['emailaddress'] . ' ' . PHP_EOL;
+    		fwrite ($fp, $write ['emailaddress'] . ' ' . PHP_EOL);
+    		
+    		$upd = $this -> db -> Query ('UPDATE ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique SET lastUpdateTime = ' . time () . ' WHERE id = ' . $campaign ['id']   . ' ');
+    		if (!$upd) {
+    			echo 'ERREUR ECRITURE DANS LA BASE ! FICHIER COROMPU';
+    			exit;
+    		}
+    	}
+    	
+    	
+    	echo 'Fin de job';
+    	
+    	
+    }
+    
     
     private function Job ($campaign) {
-    	// Definition des jobs
-    	$array = array ('open', 'bounce', 'unsub');
     	
     	
     	
@@ -151,9 +212,9 @@ class extractor_Api {
 		}
 		
 		// On crée les jobs
-		foreach ($array as $type) {
+		foreach ($this -> job as $type) {
 			echo 'Création du job : ' . $campaigndetail ['name'];
-			$job = $this -> db -> Query ('INSERT INTO ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique (timeStarted, workStatus, campagneName, lastTimeUpdate, type, campaignId) VALUES (' . time() . ', "w", "' . $campaigndetail ['name'] . ' ' . date ('d-M-Y', $campaign ['starttime']) . ']", 0, " ' . $type . ' ", ' . $campaign ['newsletterid'] . ') ');
+			$job = $this -> db -> Query ('INSERT INTO ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique (timeStarted, workStatus, campagneName, lastTimeUpdate, type, campaignid, jobid) VALUES (' . time() . ', "w", "' . $campaigndetail ['name'] . ' ' . date ('d-M-Y', $campaign ['starttime']) . ']", 0, " ' . $type . ' ", ' . $campaign ['newsletterid'] . ', ' . $campaign ['jobid'] . ') ');
 			if (!$job) {
 				$this -> db -> RollBackTransaction ();
 				exit;
