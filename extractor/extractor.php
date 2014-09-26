@@ -34,6 +34,8 @@ class Addons_extractor extends Interspire_Addons {
         // $quer =  $this -> Db -> Query ("");
         // $this -> Db -> Fetch ($quer);
         
+        $tableSettings = SENDSTUDIO_TABLEPREFIX ."addons_extractor_settings";
+        
          $quer =  $this -> Db -> Query ("CREATE TABLE IF NOT EXISTS ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_settings (hours int(11), path varchar(255), maxProcess int(8))");
          if ($quer == false){
          	throw new Exception("impossible de creer la table email_addons_extraction_settings");
@@ -42,28 +44,17 @@ class Addons_extractor extends Interspire_Addons {
          if ($quer == false){
          	throw new Exception("impossible de creer la table email_addons_extraction_historique");
          }
+          
+         exec ('mkdir /home/admin/extractor');
+         exec ('chmod 777 /home/admin/extractor');
          
-         // recupere les settings de l'addon
-         $quer = $this -> Db ->  Query ("SELECT * from ". SENDSTUDIO_TABLEPREFIX ."addons_extraction_settings");
-         $fetched = $this -> Db -> Fetch ($quer);
-        
-         // assigne les setting dans dans des variables
-        $settings_hours = "";
-        $settings_path = "";
-        $settings_maxProcess = "";
-		while ($row = mysql_fetch_array($fetched)) {
-			$settings_hours = $row["hours"];
-	        $settings_path = $row["path"];
-	        $settings_maxProcess = $row["maxProcess"];
-		}
+         $hours = 3600*72;
+         $this -> Db -> Query ("INSERT INTO ". $tableSettings." VALUES (".$hours.",'/home/admin/extractor',25)" );
+         $this -> Db -> Query ("ALTER TABLE ". SENDSTUDIO_TABLEPREFIX ."jobs ADD check int(1) SET DEFAULT 0");
+         
+         
+		$this -> installFile();
 		
-		$quer = $this -> Db ->  Query ("SELECT count(id)");
-		
-        
-        // IEM_ADDONS_PATH
-        // echo "This is some text" > randomtext.txt
-        
-        
         // Modification des fichier
         $this -> clean();
         $install = $this -> installFile ();
@@ -98,14 +89,14 @@ class Addons_extractor extends Interspire_Addons {
      */
     function Uninstall() {
         
+    	// vider la table des settings de l'addon
+        $this -> Db -> Query ("DELETE FROM ". SENDSTUDIO_TABLEPREFIX ."addons_extractor_settings");
         
         // On récupère les anciens fichiers
         $old = scandir (IEM_ADDONS_PATH . '/' . $this -> addon_name . '/backup');
         if ($old == false)
             throw new Exception ("Impossible de dÃ©sinstaller l'addon");
-      
         
-       
        foreach ($old as $backup)
            if ($backup != '.' && $backup != "..")    {       
                $file = file_get_contents (IEM_ADDONS_PATH . "/' . $this -> addon_name . '/backup/" . $backup);
@@ -115,12 +106,9 @@ class Addons_extractor extends Interspire_Addons {
               
             if (!file_put_contents (IEM_ADDONS_PATH . "/../" . str_replace ('%', '/', $backup), $file))
                 throw new Exception ("Impossible de dÃ©sinstaller l'addon ");
-            
           
            }
-
-           
-          
+		          
            $this -> clean_backup ();
            $this -> clean();
            
@@ -185,7 +173,13 @@ class Addons_extractor extends Interspire_Addons {
             //
             
         
-        
+    	$opt = array (949 => ' array ( \'text\' => \'Module d\'extraction\',  \'link\' => \'index.php?Page=Addons&amp;Addon=extractor&amp;Action=Manage\',  \'show\' => true, \'description\' => \'Outils permettant d\'exporter les ouvreurs\'), array (  ');
+    	$this -> add ($opt, 'sendstudio_functions.php', 'functions/', true);
+    	 
+    	$opt = array (38 => '$addon_system = new Interspire_Addons();$installer_enabled = $addon_system->isEnabled("extractor");if ($installer_enabled){    $installer_enabled = $addon_system->Process("extractor", "GetApi", "extractor");    $installer_enabled->cron();} ');
+    	$this -> add ($opt, 'cron.php', 'cron/');
+    	 
+    	 
             // Une fois les modifications effectué on effectue les changements
           $this -> process_file();
            return true;
@@ -194,7 +188,7 @@ class Addons_extractor extends Interspire_Addons {
     
     function Action_ () {
         $option = "";
-         $this -> Db = IEM::getDatabase();
+        $this -> Db = IEM::getDatabase();
         $this -> Db -> Connect();
         $list = $this -> Db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'addon_tracking ');
         $listselect = "<table style='border: 1px solid' width='100%'>";
