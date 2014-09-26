@@ -57,7 +57,7 @@ class extractor_Api {
     
     function cron() {
     	
-    	
+    	$this -> db -> Connect();
     	$jobs = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX .   'addons_extractor_historique WHERE workStatus = "w" OR (workStatus = "i" AND lastTimeUpdate <  ' . time() - 3600 . ')');
     	
     	if (!$jobs) {
@@ -70,7 +70,7 @@ class extractor_Api {
     	
     	if ($jobs) {
     		// On reprend le job
-
+				$this -> Process ($jobs);
     		exit;
     	}
     	
@@ -90,7 +90,7 @@ class extractor_Api {
     			exit;
     		} 
     	
-    	$campaign = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'jobs WHERE jobtype = "send" AND jobstatus = "c" AND lastupdatetime < ' . time() - (3600 * 72) . ' AND check != "check" ');
+    	$campaign = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'stats_newsletters WHERE  finishtime < ' . time() - (3600 * 72) . ' AND check != "check" ');
     	
     	if (!$campaign) {
     		echo 'Erreur récupération';
@@ -102,6 +102,8 @@ class extractor_Api {
     	
     	$this -> Job ($campaign);
     	
+    	
+    	$this -> db -> Disconnect();
     	
     }
     
@@ -123,14 +125,14 @@ class extractor_Api {
     	$this -> db -> StartTransaction();
 		
     	// On essaie de dire que le job en cour est en train d'être update
-    	$update = $this -> db -> Query ('UPDATE ' . SENDSTUDIO_TABLEPREFIX . 'jobs WHERE jobid = ' . $campaign ['jobid'] . ' ');
+    	$update = $this -> db -> Query ('UPDATE ' . SENDSTUDIO_TABLEPREFIX . 'stats_newsletters WHERE jobid = ' . $campaign ['jobid'] . ' SET check = "check" ');
 		if (!$update) {
 			$this -> db -> RollBackTransaction ();
 			echo 'Erreur lors de la mise à jour de la table de job ';
 			exit;
 		}
 		
-		$campaigndetail = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'newsletters WHERE newsletterid = ' . $campaign ['fkid'] . ' ');
+		$campaigndetail = $this -> db -> Query ('SELECT * FROM ' . SENDSTUDIO_TABLEPREFIX . 'newsletters WHERE newsletterid = ' . $campaign ['newsletterid'] . ' ');
 		if (!$campaigndetail) {
 			$this -> db -> RollBackTransaction ();
 			echo 'Erreur lors la recherche ';
@@ -146,7 +148,7 @@ class extractor_Api {
 		// On crée les jobs
 		foreach ($array as $type) {
 			echo 'Création du job : ' . $campaigndetail ['name'];
-			$job = $this -> db -> Query ('INSERT INTO ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique (timeStarted, workStatus, campagneName, lastTimeUpdate, type, campaignId) VALUES (' . time() . ', "w", "' . $campaigndetail ['name'] . ' ' . date ('d-M-Y', $campaign ['jobtime']) . ']", 0, " ' . $type . ' ", ' . $campaign ['fkid'] . ') ');
+			$job = $this -> db -> Query ('INSERT INTO ' . SENDSTUDIO_TABLEPREFIX . 'addons_extractor_historique (timeStarted, workStatus, campagneName, lastTimeUpdate, type, campaignId) VALUES (' . time() . ', "w", "' . $campaigndetail ['name'] . ' ' . date ('d-M-Y', $campaign ['starttime']) . ']", 0, " ' . $type . ' ", ' . $campaign ['newsletterid'] . ') ');
 			if (!$job) {
 				$this -> db -> RollBackTransaction ();
 				exit;
@@ -156,6 +158,8 @@ class extractor_Api {
 		
 		echo 'Jobs waiting';
 		
+		
+		$this -> db -> CommitTransaction();
 		
 		
     }
